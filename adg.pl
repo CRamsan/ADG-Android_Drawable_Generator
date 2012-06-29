@@ -79,9 +79,8 @@ if($outputDirectory eq ''){
 }
 
 print "Creating directories\n";
-make_path("$outputDirectory/drawable", "$outputDirectory/drawable-ldpi", "$outputDirectory/drawable-mdpi", "$outputDirectory/drawable-hdpi", "$outputDirectory/drawable-xhdpi");
+make_path("$outputDirectory/drawable-ldpi", "$outputDirectory/drawable-mdpi", "$outputDirectory/drawable-hdpi", "$outputDirectory/drawable-xhdpi");
 
-resizeImage($filePath, 'drawable', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
 resizeImage($filePath, 'drawable-ldpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
 resizeImage($filePath, 'drawable-mdpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
 resizeImage($filePath, 'drawable-hdpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
