@@ -46,36 +46,62 @@ sub resizeImage{
   $image->Write( "$outputDirectory/$subDir/$filename" );
 }
 
-##MAIN
-
-if ( @ARGV == 0 )
+#Check arguments validity
+if (@ARGV == 0)
 {
   print "No arguments passed\n";
-  print "Parameters required: [image] [default width] [default height]\n";
+  print "Use --help to see valid syntax and more options\n";
   exit;
 }
 
-print "Starting script\n";
-my $filePath = $ARGV[0];
-my $defaultWidth = $ARGV[1];
-my $defaultHeight = $ARGV[2];
-
+#Arguments
 my $outputFileName = '';
-my $outputDirectory = '';
+my $outputFileHeight = '0';
+my $outputFileWidth = '0';
+my $outputFileSize = '0';
+my $outputDirectoryName = '';
 
-my $result = GetOptions ("file:s" => \$outputFileName, # numeric
-			 "output:s"   => \$outputDirectory);# string
+my $generateDirectory = '1';
+my $createLDPI = '0';
+my $createMDPI = '0';
+my $createHDPI = '0';
+my $createXHDPI = '0';
 
-if($outputDirectory =~ m/\/$/){
-  chop($outputDirectory);
-  if($outputDirectory =~ m/\/$/){
+my $result = GetOptions ('outName:s'=> \$outputFileName,
+						 "outWidth=i" => \$outputFileWidth,
+						 "outHeight=i" => \$outputFileHeight,
+						 "outSize=i" => \$outputFileSize,
+						 'outDir:s' => \$outputDirectoryName,
+						 'genDir!' 	=> \$generateDirectory,
+						 'ldpi'  	=> \$createLDPI,
+						 'mdpi'  	=> \$createMDPI,
+						 'hdpi' 	=> \$createHDPI,
+						 'xhdpi'  	=> \$createXHDPI);
+
+if ($result)
+{
+  print "Error while reading arguments\n";
+  print "Use --help to check the valid syntax\n";
+  exit;
+}
+			 
+#Main body
+print "Starting script\n";
+
+if($outputDirectoryName =~ m/\/$/){
+  chop($outputDirectoryName);
+  if($outputDirectoryName =~ m/\/$/){
     print "Output directory is not well formatted\n";
     exit;
   }
 }
 
-if($outputDirectory eq ''){
-  $outputDirectory = cwd;
+if($outputDirectoryName eq ''){
+  $outputDirectoryName = cwd;
+}
+
+if( $createLDPI  || $createMDPI || $createHDPI || $createXHDPI )
+{
 }
 
 print "Creating directories\n";
