@@ -8,6 +8,9 @@ use File::Path qw(make_path remove_tree);
 use Getopt::Long;
 use Cwd;
 
+#Global variables
+$MAX_IMAGE_DIMENSION = '4000';
+
 sub resizeImage{
   my $width = 0;
   my $height = 0;
@@ -56,9 +59,8 @@ if (@ARGV == 0)
 
 #Arguments
 my $outputFileName = '';
-my $outputFileHeight = '0';
-my $outputFileWidth = '0';
-my $outputFileSize = '0';
+my $outputFileHeight = '-1';
+my $outputFileWidth = '-1';
 my $outputDirectoryName = '';
 
 my $generateOutputDirectory = '1';
@@ -69,11 +71,11 @@ my $createXHDPI = '0';
 
 #Variable
 my $inputFileName = '';
+my $error = '';
 
-my $result = GetOptions ('outName:s'=> \$outputFileName,
+$error = GetOptions ('outName:s'=> \$outputFileName,
 						 "outWidth=i" => \$outputFileWidth,
 						 "outHeight=i" => \$outputFileHeight,
-						 "outSize=i" => \$outputFileSize,
 						 'outDir:s' => \$outputDirectoryName,
 						 'genOutDir!' 	=> \$generateOutputDirectory,
 						 'ldpi'  	=> \$createLDPI,
@@ -81,10 +83,44 @@ my $result = GetOptions ('outName:s'=> \$outputFileName,
 						 'hdpi' 	=> \$createHDPI,
 						 'xhdpi'  	=> \$createXHDPI);
 
-if ($result)
+if ($error)
 {
   print "Error while reading arguments\n";
   print "Use --help to check the valid syntax\n";
+  exit;
+}
+
+if($outputFileHeight == -1 && $outputFileWidth == -1)
+{
+  print "No dimensions provided\n";
+  exit;
+}
+if($outputFileWidth <= 0)
+{
+  print "Width provided is less than 0\n";
+  print "Value: $outputFileWidth\n";
+  $error = '1';
+}
+if($outputFileHeight <= 0)
+{
+  print "Height provided is less than 0\n";
+  print "Value: $outputFileHeight\n" 
+  $error = '1';
+}
+if($outputFileWidth > $MAX_IMAGE_DIMENSION)
+{
+  print "Width provided is bigger than MAX_IMAGE_DIMENSION\n";
+  print "Value: $outputFileWidth\n" 
+  $error = '1';
+}
+if($outputFileHeight > $MAX_IMAGE_DIMENSION)
+{
+  print "Height provided is bigger than MAX_IMAGE_DIMENSION\n";
+  print "Value: $outputFileHeight\n" 
+  $error = '1';
+}
+if($error)
+{
   exit;
 }
 
