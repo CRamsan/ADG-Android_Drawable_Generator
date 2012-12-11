@@ -61,18 +61,21 @@ my $outputFileWidth = '0';
 my $outputFileSize = '0';
 my $outputDirectoryName = '';
 
-my $generateDirectory = '1';
+my $generateOutputDirectory = '1';
 my $createLDPI = '0';
 my $createMDPI = '0';
 my $createHDPI = '0';
 my $createXHDPI = '0';
+
+#Variable
+my $inputFileName = '';
 
 my $result = GetOptions ('outName:s'=> \$outputFileName,
 						 "outWidth=i" => \$outputFileWidth,
 						 "outHeight=i" => \$outputFileHeight,
 						 "outSize=i" => \$outputFileSize,
 						 'outDir:s' => \$outputDirectoryName,
-						 'genDir!' 	=> \$generateDirectory,
+						 'genOutDir!' 	=> \$generateOutputDirectory,
 						 'ldpi'  	=> \$createLDPI,
 						 'mdpi'  	=> \$createMDPI,
 						 'hdpi' 	=> \$createHDPI,
@@ -84,10 +87,13 @@ if ($result)
   print "Use --help to check the valid syntax\n";
   exit;
 }
-			 
+
+$inputFileName = ARG[0]
+
 #Main body
 print "Starting script\n";
 
+#Make sure the output folder is formatted correctly
 if($outputDirectoryName =~ m/\/$/){
   chop($outputDirectoryName);
   if($outputDirectoryName =~ m/\/$/){
@@ -96,16 +102,46 @@ if($outputDirectoryName =~ m/\/$/){
   }
 }
 
+#If the ourput folder is empty, use cwd
 if($outputDirectoryName eq ''){
   $outputDirectoryName = cwd;
 }
 
-if( $createLDPI  || $createMDPI || $createHDPI || $createXHDPI )
-{
-}
+if($generateDirectory){
+  #All flags are set to false by default, if the user activates at least 
+  #one flag  this change will be kept. If all flags are still false(no 
+  #flag set by the user), then set all of them to true.
+  if(!($createLDPI || $createMDPI || $createHDPI || $createXHDPI))
+  {
+    $createLDPI = '1';
+    $createMDPI = '1';
+    $createHDPI = '1';
+    $createXHDPI = '1';
+  }
 
-print "Creating directories\n";
-make_path("$outputDirectory/drawable-ldpi", "$outputDirectory/drawable-mdpi", "$outputDirectory/drawable-hdpi", "$outputDirectory/drawable-xhdpi");
+  print "Creating directories\n";
+
+  if($createLDPI)
+  {
+    make_path("$outputDirectory/drawable-ldpi");
+  }
+  if($createMDPI)
+  {
+    make_path("$outputDirectory/drawable-mdpi");
+  }
+  if($createHDPI)
+  {
+    make_path("$outputDirectory/drawable-hdpi");
+  }
+  if($createXHDPI)
+  {
+    make_path("$outputDirectory/drawable-xhdpi");
+  }
+}
+else
+{
+  print "Directories will not be created\n";
+}
 
 resizeImage($filePath, 'drawable-ldpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
 resizeImage($filePath, 'drawable-mdpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
