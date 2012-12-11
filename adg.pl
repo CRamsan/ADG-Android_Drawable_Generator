@@ -9,7 +9,7 @@ use Getopt::Long;
 use Cwd;
 
 #Global variables
-$MAX_IMAGE_DIMENSION = '4000';
+my $MAX_IMAGE_DIMENSION = '4000';
 
 #[0] Image
 #[1] Width
@@ -36,10 +36,10 @@ sub resizeImage{
   }
   
   #Make the required changes
-  $image->Resize( geometry => "$imageWidth"."x"."$imageHeight" );
+  $imageObject->Resize( geometry => "$imageWidth"."x"."$imageHeight" );
   print "Saving file to $imageDirectory/$imageFilename\n";
   #Save the image
-  $image->Write( "$imageDirectory/$imageFilename" );
+  $imageObject->Write( "$imageDirectory/$imageFilename" );
 }
 
 #Check arguments validity
@@ -74,17 +74,17 @@ my $modFolderXH = '.';
 my $inputFileName = '';
 my $error = '';
 
-$error = GetOptions ('outName:s'=> \$outputFileName,
-						 "outWidth=i" => \$outputFileWidth,
-						 "outHeight=i" => \$outputFileHeight,
-						 'outDir:s' => \$outputDirectoryName,
-						 'genOutDir!' 	=> \$generateOutputDirectory,
-						 'alpha!' 	=> \$useAlpha,
-						 'ldpi'  	=> \$createLDPI,
-						 'mdpi'  	=> \$createMDPI,
-						 'hdpi' 	=> \$createHDPI,
-						 'xhdpi'  	=> \$createXHDPI,
-						 'help' 	=> \$help);
+$error = GetOptions (	'outName:s'	=> \$outputFileName,
+			"outWidth=i" 	=> \$outputFileWidth,
+			"outHeight=i" 	=> \$outputFileHeight,
+			'outDir:s' 	=> \$outputDirectoryName,
+			'genOutDir!' 	=> \$generateOutputDirectory,
+			'alpha!' 	=> \$useAlpha,
+			'ldpi'  	=> \$createLDPI,
+			'mdpi'  	=> \$createMDPI,
+			'hdpi' 		=> \$createHDPI,
+			'xhdpi'  	=> \$createXHDPI,
+			'help' 		=> \$help);
 
 if ($error)
 {
@@ -113,19 +113,19 @@ if($outputFileWidth < 0)
 if($outputFileHeight < 0)
 {
   print "Height provided is less than 0\n";
-  print "Value: $outputFileHeight\n" 
+  print "Value: $outputFileHeight\n";
   $error = '1';
 }
 if($outputFileWidth > $MAX_IMAGE_DIMENSION)
 {
   print "Width provided is bigger than MAX_IMAGE_DIMENSION\n";
-  print "Value: $outputFileWidth\n" 
+  print "Value: $outputFileWidth\n";
   $error = '1';
 }
 if($outputFileHeight > $MAX_IMAGE_DIMENSION)
 {
   print "Height provided is bigger than MAX_IMAGE_DIMENSION\n";
-  print "Value: $outputFileHeight\n" 
+  print "Value: $outputFileHeight\n";
   $error = '1';
 }
 if($error)
@@ -148,12 +148,12 @@ if($outputDirectoryName eq ''){
 }
 
 #Get the input file from the arguments
-$inputFileName = ARG[0]
+$inputFileName = $ARGV[0];
 
 #Main body
 print "Starting script\n";
 
-if($generateDirectory){
+if($generateOutputDirectory){
   #All flags are set to false by default, if the user activates at least 
   #one flag  this change will be kept. If all flags are still false(no 
   #flag set by the user), then set all of them to true.
@@ -171,13 +171,14 @@ else
 }
 
 #Starting file processing
-print "Opening image $filename\n";
+print "Opening image $inputFileName\n";
 my $image = Image::Magick->new;
 $image->read($inputFileName);   
 #If the outputFileName is empty, use the current file name
-if($outputFileName ne '')
+if($outputFileName eq '')
 {
-  $outputFileName = fileparse($inputFileName)[1]; 
+  my($filename, $directories, $suffix) = fileparse($inputFileName);
+  $outputFileName = $filename; 
 }
 
 #Set the gravity to Center
@@ -191,7 +192,7 @@ $image->Set( Gravity => 'Center' );
 my $outputFolder = '';
 if($createXHDPI)
 {
-  if($generateDirectory){
+  if($generateOutputDirectory){
       $modFolderXH = 'drawable-xhdpi';
       make_path("$outputDirectoryName/$modFolderXH");
   }	
@@ -200,7 +201,7 @@ if($createXHDPI)
 }
 if($createHDPI)
 {
-  if($generateDirectory){
+  if($generateOutputDirectory){
       $modFolderH = 'drawable-hdpi';
       make_path("$outputDirectoryName/$modFolderH");
   }
@@ -209,7 +210,7 @@ if($createHDPI)
 }
 if($createMDPI)
 {
-  if($generateDirectory){
+  if($generateOutputDirectory){
       $modFolderM = 'drawable-mhdpi';
       make_path("$outputDirectoryName/$modFolderM");
   }	
@@ -218,7 +219,7 @@ if($createMDPI)
 }
 if($createLDPI)
 {
-  if($generateDirectory){
+  if($generateOutputDirectory){
       $modFolderL = 'drawable-ldpi';
       make_path("$outputDirectoryName/$modFolderL");
   }	
