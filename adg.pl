@@ -11,6 +11,12 @@ use Cwd;
 #Global variables
 $MAX_IMAGE_DIMENSION = '4000';
 
+#[0] Image
+#[1] Width
+#[2] Height
+#[3] Alpha
+#[4] Output Directory
+#[5] Output Filename
 sub resizeImage{
   my $width = 0;
   my $height = 0;
@@ -59,15 +65,21 @@ if (@ARGV == 0)
 
 #Arguments
 my $outputFileName = '';
-my $outputFileHeight = '-1';
-my $outputFileWidth = '-1';
+my $outputFileHeight = '0';
+my $outputFileWidth = '0';
 my $outputDirectoryName = '';
 
 my $generateOutputDirectory = '1';
+my $useAlpha = '1';
 my $createLDPI = '0';
 my $createMDPI = '0';
 my $createHDPI = '0';
 my $createXHDPI = '0';
+
+my $modFolderL = '.';
+my $modFolderM = '.';
+my $modFolderH = '.';
+my $modFolderXH = '.';
 
 #Variable
 my $inputFileName = '';
@@ -78,6 +90,7 @@ $error = GetOptions ('outName:s'=> \$outputFileName,
 						 "outHeight=i" => \$outputFileHeight,
 						 'outDir:s' => \$outputDirectoryName,
 						 'genOutDir!' 	=> \$generateOutputDirectory,
+						 'alpha!' 	=> \$useAlpha,
 						 'ldpi'  	=> \$createLDPI,
 						 'mdpi'  	=> \$createMDPI,
 						 'hdpi' 	=> \$createHDPI,
@@ -90,18 +103,18 @@ if ($error)
   exit;
 }
 
-if($outputFileHeight == -1 && $outputFileWidth == -1)
+if($outputFileHeight == 0 && $outputFileWidth == 0)
 {
   print "No dimensions provided\n";
   exit;
 }
-if($outputFileWidth <= 0)
+if($outputFileWidth < 0)
 {
   print "Width provided is less than 0\n";
   print "Value: $outputFileWidth\n";
   $error = '1';
 }
-if($outputFileHeight <= 0)
+if($outputFileHeight < 0)
 {
   print "Height provided is less than 0\n";
   print "Value: $outputFileHeight\n" 
@@ -124,11 +137,6 @@ if($error)
   exit;
 }
 
-$inputFileName = ARG[0]
-
-#Main body
-print "Starting script\n";
-
 #Make sure the output folder is formatted correctly
 if($outputDirectoryName =~ m/\/$/){
   chop($outputDirectoryName);
@@ -142,6 +150,11 @@ if($outputDirectoryName =~ m/\/$/){
 if($outputDirectoryName eq ''){
   $outputDirectoryName = cwd;
 }
+
+$inputFileName = ARG[0]
+
+#Main body
+print "Starting script\n";
 
 if($generateDirectory){
   #All flags are set to false by default, if the user activates at least 
@@ -159,25 +172,40 @@ if($generateDirectory){
 
   if($createLDPI)
   {
-    make_path("$outputDirectory/drawable-ldpi");
+    $modFolderL = 'drawable-ldpi';
+    make_path("$outputDirectory/$modFolderL");
   }
   if($createMDPI)
   {
-    make_path("$outputDirectory/drawable-mdpi");
+    $modFolderM = 'drawable-mdpi';
+    make_path("$outputDirectory/$modFolderM");  
   }
   if($createHDPI)
   {
-    make_path("$outputDirectory/drawable-hdpi");
+    $modFolderH = 'drawable-hdpi';
+    make_path("$outputDirectory/$modFolderH");  
   }
   if($createXHDPI)
   {
-    make_path("$outputDirectory/drawable-xhdpi");
+    $modFolderXH = 'drawable-xhdpi';
+    make_path("$outputDirectory/$modFolderXH");  
   }
 }
 else
 {
   print "Directories will not be created\n";
 }
+
+print "Opening image $filename\n";
+my $image = Image::Magick->new;
+$image->read($inputFileName);   
+if($outputFileName ne ''){
+  $outputFileName = $newName; 
+}  
+$image->Set( Gravity => 'Center' );
+$image->Set(alpha=>'On');
+$image->Resize( geometry => "$width"."x"."$height" );
+
 
 resizeImage($filePath, 'drawable-ldpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
 resizeImage($filePath, 'drawable-mdpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
