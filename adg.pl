@@ -5,25 +5,29 @@ use warnings;
 
 use Image::Magick;
 use File::Path qw(make_path remove_tree);
+use File::Basename;
 use Getopt::Long;
 use Cwd;
+use Scalar::Util qw(looks_like_number);
 
 #Global variables
 my $MAX_IMAGE_DIMENSION = '4000';
-
+my $DEBUG = '1';
 #[0] Image
 #[1] Width
 #[2] Height
-#[3] Alpha
-#[4] Output Directory
-#[5] Output Filename
+#[3] Output Directory
+#[4] Output Filename
+#[5] Use Alpha
+#[6] Keep Aspect Ratio
 sub resizeImage{
   my $imageObject = $_[0];
   my $imageWidth = $_[1];
   my $imageHeight = $_[2];
-  my $imageAlpha = $_[3];  
-  my $imageDirectory = $_[4];
-  my $imageFilename = $_[5];
+  my $imageDirectory = $_[3];
+  my $imageFilename = $_[4];
+  my $imageAlpha = $_[5];  
+  my $imageAspectRatio = $_[6];
 
   #Set if using alpha
   if($imageAlpha)
@@ -34,9 +38,15 @@ sub resizeImage{
   {
     $imageObject->Set(alpha=>'Off');
   }
-  
+
+  my $bang = '';
+  if(!$imageAspectRatio)
+  {
+    $bang = '!';
+  }
+
   #Make the required changes
-  $imageObject->Resize( geometry => "$imageWidth"."x"."$imageHeight" );
+  $imageObject->Resize( geometry => "$imageWidth"."x"."$imageHeight"."$bang" );
   print "Saving file to $imageDirectory/$imageFilename\n";
   #Save the image
   $imageObject->Write( "$imageDirectory/$imageFilename" );
@@ -57,6 +67,8 @@ my $outputFileWidth = '0';
 my $outputDirectoryName = '';
 
 my $generateOutputDirectory = '1';
+my $keepAspectRatio = '1';
+my $scaleOutside = '0';
 my $useAlpha = '1';
 my $createLDPI = '0';
 my $createMDPI = '0';
@@ -73,12 +85,15 @@ my $modFolderXH = '.';
 #Variable
 my $inputFileName = '';
 my $error = '';
+my $imageSide = '';
 
-$error = GetOptions (	'outName:s'	=> \$outputFileName,
-			"outWidth=i" 	=> \$outputFileWidth,
-			"outHeight=i" 	=> \$outputFileHeight,
-			'outDir:s' 	=> \$outputDirectoryName,
-			'genOutDir!' 	=> \$generateOutputDirectory,
+$error = GetOptions (	'outname:s'	=> \$outputFileName,
+			'outwidth=i' 	=> \$outputFileWidth,
+			'outheight=i' 	=> \$outputFileHeight,
+			'outdir:s' 	=> \$outputDirectoryName,
+			'genoutdir!' 	=> \$generateOutputDirectory,
+			'aspectratio!' 	=> \$keepAspectRatio,
+			'scaleoutside!'	=> \$scaleOutside,
 			'alpha!' 	=> \$useAlpha,
 			'ldpi'  	=> \$createLDPI,
 			'mdpi'  	=> \$createMDPI,
@@ -86,51 +101,78 @@ $error = GetOptions (	'outName:s'	=> \$outputFileName,
 			'xhdpi'  	=> \$createXHDPI,
 			'help' 		=> \$help);
 
-if ($error)
-{
-  print "Error while reading arguments\n";
-  print "Use --help to check the valid syntax\n";
-  exit;
-}
-
 if($help)
 {
-  print "";
+  print "sdfdfs";
 }
 
-#Check the validity of the provided dimensions
-if($outputFileHeight == 0 && $outputFileWidth == 0)
+#Get the input file from the arguments
+$inputFileName = $ARGV[0];
+if(looks_like_number($ARGV[1]))
 {
-  print "No dimensions provided\n";
+  $imageSide = $ARGV[1];
+}
+else
+{
+  print "Dimension does not look like a number\n";
   exit;
 }
-if($outputFileWidth < 0)
+
+if($keepAspectRatio && $scaleOutside)
 {
-  print "Width provided is less than 0\n";
-  print "Value: $outputFileWidth\n";
-  $error = '1';
+    print "Conflicting arguments, aspectRatio and scaleOutside cannot be set at the same time.";
+    $error = '1';
 }
-if($outputFileHeight < 0)
+
+if(!$imageSide)
 {
-  print "Height provided is less than 0\n";
-  print "Value: $outputFileHeight\n";
-  $error = '1';
+  #Check the validity of the provided dimensions
+  if($outputFileHeight == 0 || $outputFileWidth == 0)
+  {
+    print "No dimensions provided\n";
+    exit;
+  }
+  if($outputFileWidth < 0)
+  {
+    print "Width provided is less than 0\n";
+    print "Value: $outputFileWidth\n";
+    $error = '1';
+  }
+  if($outputFileHeight < 0)
+  {
+    print "Height provided is less than 0\n";
+    print "Value: $outputFileHeight\n";
+    $error = '1';
+  }
+  if($outputFileWidth > $MAX_IMAGE_DIMENSION)
+  {
+    print "Width provided is bigger than MAX_IMAGE_DIMENSION\n";
+    print "Value: $outputFileWidth\n";
+    $error = '1';
+  }
+  if($outputFileHeight > $MAX_IMAGE_DIMENSION)
+  {
+    print "Height provided is bigger than MAX_IMAGE_DIMENSION\n";
+    print "Value: $outputFileHeight\n";
+    $error = '1';
+  }
+  if($error)
+  {
+    exit;
+  }
 }
-if($outputFileWidth > $MAX_IMAGE_DIMENSION)
+else
 {
-  print "Width provided is bigger than MAX_IMAGE_DIMENSION\n";
-  print "Value: $outputFileWidth\n";
-  $error = '1';
-}
-if($outputFileHeight > $MAX_IMAGE_DIMENSION)
-{
-  print "Height provided is bigger than MAX_IMAGE_DIMENSION\n";
-  print "Value: $outputFileHeight\n";
-  $error = '1';
-}
-if($error)
-{
-  exit;
+  if($outputFileHeight != 0 || $outputFileWidth != 0)
+  {
+    print "Conflicting arguments, please provide a general size or a specific size, not both\n";
+    exit;
+  }
+  else
+  {
+    $outputFileHeight = $imageSide;
+    $outputFileWidth = $imageSide;
+  }
 }
 
 #Make sure the output folder is formatted correctly
@@ -146,9 +188,6 @@ if($outputDirectoryName =~ m/\/$/){
 if($outputDirectoryName eq ''){
   $outputDirectoryName = cwd;
 }
-
-#Get the input file from the arguments
-$inputFileName = $ARGV[0];
 
 #Main body
 print "Starting script\n";
@@ -174,6 +213,7 @@ else
 print "Opening image $inputFileName\n";
 my $image = Image::Magick->new;
 $image->read($inputFileName);   
+
 #If the outputFileName is empty, use the current file name
 if($outputFileName eq '')
 {
@@ -183,6 +223,14 @@ if($outputFileName eq '')
 
 #Set the gravity to Center
 $image->Set( Gravity => 'Center' );
+
+if($scaleOutside)
+{
+  my $maxSize = '0';
+  $maxSize = $outputFileWidth unless ($outputFileWidth < $outputFileHeight);
+  $outputFileWidth = $maxSize;
+  $outputFileHeight = $maxSize;
+}
 
 #We will check each size flag and the $generateDirectory flag
 #and we will take action as required. If generateDirectory is
@@ -197,7 +245,7 @@ if($createXHDPI)
       make_path("$outputDirectoryName/$modFolderXH");
   }	
   $outputFolder = "$outputDirectoryName/$modFolderXH";
-  resizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $useAlpha, $outputFolder, $outputFileName);
+  resizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
 }
 if($createHDPI)
 {
@@ -206,7 +254,7 @@ if($createHDPI)
       make_path("$outputDirectoryName/$modFolderH");
   }
   $outputFolder = "$outputDirectoryName/$modFolderH";
-  resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $useAlpha, $outputFolder, $outputFileName);
+  resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
 }
 if($createMDPI)
 {
@@ -215,7 +263,7 @@ if($createMDPI)
       make_path("$outputDirectoryName/$modFolderM");
   }	
   $outputFolder = "$outputDirectoryName/$modFolderM";
-  resizeImage($image, $outputFileWidth, $outputFileHeight, $useAlpha, $outputFolder, $outputFileName);
+  resizeImage($image, $outputFileWidth, $outputFileHeight, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
 }
 if($createLDPI)
 {
@@ -224,5 +272,5 @@ if($createLDPI)
       make_path("$outputDirectoryName/$modFolderL");
   }	
   $outputFolder = "$outputDirectoryName/$modFolderL";
-  resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $useAlpha, $outputFolder, $outputFileName);
+  resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
 }
