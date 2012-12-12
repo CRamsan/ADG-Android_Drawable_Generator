@@ -18,41 +18,25 @@ $MAX_IMAGE_DIMENSION = '4000';
 #[4] Output Directory
 #[5] Output Filename
 sub resizeImage{
-  my $width = 0;
-  my $height = 0;
-  my $filename = $_[0];
-  my $subDir = $_[1];
-  my $newName = $_[4];
-  my $outputDirectory = $_[5];
-  if($subDir eq 'drawable'){
-    print "Default size is "; $width = $_[2]; $height = $_[3]; }
-  elsif($subDir eq 'drawable-ldpi')
-    { print "LDPI size is "; $width = $_[2] * 0.75; $height = $_[3] * 0.75;}
-  elsif($subDir eq 'drawable-mdpi')
-    { print "MDPI size is "; $width = $_[2]; $height = $_[3];} 
-  elsif($subDir eq 'drawable-hdpi')
-    { print "HDPI size is "; $width = $_[2] * 1.5; $height = $_[3] * 1.5;} 
-  elsif($subDir eq 'drawable-xhdpi')
-    { print "XHDPI size is "; $width = $_[2] * 2; $height = $_[3]  * 2;}
+  my $imageObject = $_[0];
+  my $imageWidth = $_[1];
+  my $imageHeight = $_[2];
+  my $imageAlpha = $_[3];  
+  my $imageDirectory = $_[4];
+  my $imageFilename = $_[5];
+ 
+  if($imageAlpha)
+  {
+    $imageObject->Set(alpha=>'On');
+  }
   else
-    { print "No correct argument"; return;}
+  {
+    $imageObject->Set(alpha=>'Off');
+  }
 
-  print "$width"."x"."$height\n";
-
-
-  my $image = Image::Magick->new;
-
-  print "Opening image $filename\n";
-  $image->read($filename);   
-  if($newName ne ''){
-    $filename = $newName;
-  }  
-  $image->Set( Gravity => 'Center' );
-  $image->Set(alpha=>'On');
-  $image->Resize( geometry => "$width"."x"."$height" );
-  #$image->Extent( geometry => "$width"."x"."$height" );
-  print "Saving file to $outputDirectory/$subDir/$filename\n";
-  $image->Write( "$outputDirectory/$subDir/$filename" );
+  $image->Resize( geometry => "$imageWidth"."x"."$imageHeight" );
+  print "Saving file to $imageDirectory/$imageFilename\n";
+  $image->Write( "$imageDirectory/$imageFilename" );
 }
 
 #Check arguments validity
@@ -167,48 +151,28 @@ if($generateDirectory){
     $createHDPI = '1';
     $createXHDPI = '1';
   }
-
-  print "Creating directories\n";
-
-  if($createLDPI)
-  {
-    $modFolderL = 'drawable-ldpi';
-    make_path("$outputDirectory/$modFolderL");
-  }
-  if($createMDPI)
-  {
-    $modFolderM = 'drawable-mdpi';
-    make_path("$outputDirectory/$modFolderM");  
-  }
-  if($createHDPI)
-  {
-    $modFolderH = 'drawable-hdpi';
-    make_path("$outputDirectory/$modFolderH");  
-  }
-  if($createXHDPI)
-  {
-    $modFolderXH = 'drawable-xhdpi';
-    make_path("$outputDirectory/$modFolderXH");  
-  }
 }
 else
 {
-  print "Directories will not be created\n";
+  print "Modular directories will not be created\n";
 }
 
 print "Opening image $filename\n";
 my $image = Image::Magick->new;
 $image->read($inputFileName);   
-if($outputFileName ne ''){
-  $outputFileName = $newName; 
-}  
+if($outputFileName ne '')
+{
+  $outputFileName = fileparse($inputFileName)[1]; 
+}
 $image->Set( Gravity => 'Center' );
-$image->Set(alpha=>'On');
-$image->Resize( geometry => "$width"."x"."$height" );
 
-
-resizeImage($filePath, 'drawable-ldpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
-resizeImage($filePath, 'drawable-mdpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
-resizeImage($filePath, 'drawable-hdpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
-resizeImage($filePath, 'drawable-xhdpi', $defaultWidth, $defaultHeight, $outputFileName, $outputDirectory);
-
+my $outputFolder = '';
+if($createXHDPI)
+{
+  if($generateDirectory){
+      $modFolderL = 'drawable-ldpi';
+      make_path("$outputDirectoryName/$modFolderL");
+  }	
+  $outputFolder = "$outputDirectoryName/$modFolderL";
+  resizeImage($image, $outputFileWidth * 0.75, $outputFileHeight * 0.75, $useAlpha, $outputFolder, $outputFileName);
+}
