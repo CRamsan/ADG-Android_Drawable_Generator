@@ -104,7 +104,7 @@ GetOptions (	'outname=s'	=> \$outputFileName,
 
 if($help)
 {
-  print "Usage adg [file] [reference size] [--outname] [--outwidth] [--outheight] [--outdir] [--genoutdir] [--aspectratio] [--scaleoutside] [--ldpi] [--mdpi] [--hdpi] [--xhdpi] [--help]\n";
+  print "Usage adg [file] [referencesize size] [--outname name] [--outwidth size] [--outheight size] [--outdir path] [--genoutdir] [--aspectratio] [--scaleoutside] [--ldpi] [--mdpi] [--hdpi] [--xhdpi] [--help]\n";
   print "\n";
   print "A image will be scaled based on the size provided. This scaling will happen by generating a square using the dimensions provided and then fitting the image inside of it. By default the image will not be stretched and it will be scaled to fit inside the square. Some options can be used, such as --noaspectratio, to strech the image into the shape. Another important option is --scaleoutside, this option will scale the image to fill the square.\n";
   print "\n";
