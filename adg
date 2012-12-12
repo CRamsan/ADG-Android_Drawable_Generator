@@ -129,9 +129,9 @@ if($help)
   print "\n";
   print "--genoutdir[negatable]: If folders with the modifiers(ldpi-drawable, mdpi-...) will be created. This is set to true by default.\n"; 
   print "\n";
-  print "--aspectratio[negatable]: If aspect ration will be kept when scaling. This is set to true by default.\n"; 
+  print "--aspectratio[negatable]: If aspect ration will be kept when scaling. This is set to true by default. If this flag is set, then --scaleoutside can not be set.\n"; 
   print "\n";
-  print "--scaleoutside[negatable]: This is set to false by default.\n"; 
+  print "--scaleoutside[negatable]: If the shortest side is going to be used for reference when scaling. This is set to false by default. If this flag is set, then --aspectration can not be negated.\n"; 
   print "\n";
   print "--ldpi: Generate the ldpi version of the image\n";
   print "\n";

@@ -42,9 +42,9 @@ By default, all the modified images will be created(ldpi, mdpi, hdpi, xhdpi), bu
 
  * --genoutdir[negatable]: If folders with the modifiers(ldpi-drawable, mdpi-...) will be created. This is set to true by default.
 
- * --aspectratio[negatable]: If aspect ration will be kept when scaling. This is set to true by default.
+ * --aspectratio[negatable]: If aspect ration will be kept when scaling. This is set to true by default. If this flag is set, then --scaleoutside can not be set. 
 
- * --scaleoutside[negatable]: This is set to false by default.
+ * --scaleoutside[negatable]: If the shortest side is going to be used for reference when scaling. This is set to false by default. If this flag is set, then --aspectration can not be negated. 
 
  * --ldpi: Generate the ldpi version of the image
 
