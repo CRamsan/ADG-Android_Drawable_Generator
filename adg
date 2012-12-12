@@ -30,13 +30,14 @@ sub resizeImage{
   my $imageAspectRatio = $_[6];
 
   #Set if using alpha
+  #This feature is not yet implemented
   if($imageAlpha)
   {
     $imageObject->Set(alpha=>'On');
   }
   else
   {
-    $imageObject->Set(alpha=>'Off');
+    $imageObject->Set(alpha=>'On');
   }
 
   my $bang = '';
@@ -87,43 +88,37 @@ my $inputFileName = '';
 my $error = '';
 my $imageSide = '';
 
-$error = GetOptions (	'outname:s'	=> \$outputFileName,
-			'outwidth=i' 	=> \$outputFileWidth,
-			'outheight=i' 	=> \$outputFileHeight,
-			'outdir:s' 	=> \$outputDirectoryName,
-			'genoutdir!' 	=> \$generateOutputDirectory,
-			'aspectratio!' 	=> \$keepAspectRatio,
-			'scaleoutside!'	=> \$scaleOutside,
-			'alpha!' 	=> \$useAlpha,
-			'ldpi'  	=> \$createLDPI,
-			'mdpi'  	=> \$createMDPI,
-			'hdpi' 		=> \$createHDPI,
-			'xhdpi'  	=> \$createXHDPI,
-			'help' 		=> \$help);
+GetOptions (	'outname=s'	=> \$outputFileName,
+		'outwidth=i' 	=> \$outputFileWidth,
+		'outheight=i' 	=> \$outputFileHeight,
+		'outdir=s' 	=> \$outputDirectoryName,
+		'genoutdir!' 	=> \$generateOutputDirectory,
+		'aspectratio!' 	=> \$keepAspectRatio,
+		'scaleoutside!'	=> \$scaleOutside,
+		#'alpha!' 	=> \$useAlpha,
+		'ldpi'  	=> \$createLDPI,
+		'mdpi'  	=> \$createMDPI,
+		'hdpi' 		=> \$createHDPI,
+		'xhdpi'  	=> \$createXHDPI,
+		'help' 		=> \$help);
 
 if($help)
 {
-  print "sdfdfs";
+  print "\n";
 }
 
 #Get the input file from the arguments
 $inputFileName = $ARGV[0];
-if(looks_like_number($ARGV[1]))
-{
-  $imageSide = $ARGV[1];
-}
-else
-{
-  print "Dimension does not look like a number\n";
-  exit;
-}
+$imageSide = $ARGV[1];
 
-if($keepAspectRatio && $scaleOutside)
+#ScaleOutside requires keepAspectRatio
+if(!$keepAspectRatio && $scaleOutside)
 {
-    print "Conflicting arguments, aspectRatio and scaleOutside cannot be set at the same time.";
+    print "Conflicting arguments, scaleOutside cannot be set if aspectRatio is not set.\n";
     $error = '1';
 }
 
+#If imageSide has not been set
 if(!$imageSide)
 {
   #Check the validity of the provided dimensions
@@ -163,15 +158,25 @@ if(!$imageSide)
 }
 else
 {
+#Check imageSide was set correctly. 
+  if(!looks_like_number($ARGV[1]))
+  {
+    print "Dimension does not look like a number\n";
+    $error = '1';
+  }
   if($outputFileHeight != 0 || $outputFileWidth != 0)
   {
     print "Conflicting arguments, please provide a general size or a specific size, not both\n";
-    exit;
+    $error = '1';
   }
   else
   {
     $outputFileHeight = $imageSide;
     $outputFileWidth = $imageSide;
+  }
+  if($error)
+  {
+    exit;
   }
 }
 
@@ -192,21 +197,15 @@ if($outputDirectoryName eq ''){
 #Main body
 print "Starting script\n";
 
-if($generateOutputDirectory){
-  #All flags are set to false by default, if the user activates at least 
-  #one flag  this change will be kept. If all flags are still false(no 
-  #flag set by the user), then set all of them to true.
-  if(!($createLDPI || $createMDPI || $createHDPI || $createXHDPI))
-  {
-    $createLDPI = '1';
-    $createMDPI = '1';
-    $createHDPI = '1';
-    $createXHDPI = '1';
-  }
-}
-else
+#All flags are set to false by default, if the user activates at least 
+#one flag  this change will be kept. If all flags are still false(no 
+#flag set by the user), then set all of them to true.
+if(!($createLDPI || $createMDPI || $createHDPI || $createXHDPI))
 {
-  print "Modular directories will not be created\n";
+  $createLDPI = '1';
+  $createMDPI = '1';
+  $createHDPI = '1';
+  $createXHDPI = '1';
 }
 
 #Starting file processing
@@ -215,21 +214,43 @@ my $image = Image::Magick->new;
 $image->read($inputFileName);   
 
 #If the outputFileName is empty, use the current file name
+my $filename;
+my $directories;
+my $suffix;
 if($outputFileName eq '')
 {
-  my($filename, $directories, $suffix) = fileparse($inputFileName);
+  ($filename, $directories, $suffix) = fileparse($inputFileName, qr/\.[^.]*/);
   $outputFileName = $filename; 
 }
 
 #Set the gravity to Center
 $image->Set( Gravity => 'Center' );
 
+#Get the dimensions required to scale the image using the bigger side
+#as a reference instead of the smaller.
 if($scaleOutside)
 {
+  my($width, $height, $size, $format) = $image->Ping($inputFileName);
   my $maxSize = '0';
-  $maxSize = $outputFileWidth unless ($outputFileWidth < $outputFileHeight);
+  my $ratio = '0';
+  if($width < $height)
+  {
+    $ratio = $height/$width;
+    $maxSize = $outputFileHeight * $ratio; 
+  }
+  else
+  {
+    $ratio = $width/$height;
+    $maxSize = $outputFileWidth * $ratio; 
+  }
   $outputFileWidth = $maxSize;
   $outputFileHeight = $maxSize;
+  print "Image will use size $maxSize as a reference.\n";
+}
+
+if(!$generateOutputDirectory)
+{
+  print "Modular directories will not be created\n";
 }
 
 #We will check each size flag and the $generateDirectory flag
@@ -238,38 +259,59 @@ if($scaleOutside)
 #then $modFolder will be the respective folder with the modifier
 #(ldpi, mdpi, hdpi, xhdpi).
 my $outputFolder = '';
+my $mod = '';
 if($createXHDPI)
 {
+  $mod = 'xhdpi';
   if($generateOutputDirectory){
-      $modFolderXH = 'drawable-xhdpi';
+      $modFolderXH = "drawable-$mod";
       make_path("$outputDirectoryName/$modFolderXH");
+  }
+  else
+  {
+    $outputFileName = "$filename-$mod$suffix";
   }	
   $outputFolder = "$outputDirectoryName/$modFolderXH";
   resizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
 }
 if($createHDPI)
 {
+  $mod = 'hdpi';
   if($generateOutputDirectory){
-      $modFolderH = 'drawable-hdpi';
+      $modFolderH = "drawable-$mod";
       make_path("$outputDirectoryName/$modFolderH");
   }
+  else
+  {
+    $outputFileName = "$filename-$mod$suffix";
+  }	
   $outputFolder = "$outputDirectoryName/$modFolderH";
   resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
 }
 if($createMDPI)
 {
+  $mod = 'mdpi';
   if($generateOutputDirectory){
-      $modFolderM = 'drawable-mhdpi';
+      $modFolderM = "drawable-$mod";
       make_path("$outputDirectoryName/$modFolderM");
+  }
+  else
+  {
+    $outputFileName = "$filename-$mod$suffix";
   }	
   $outputFolder = "$outputDirectoryName/$modFolderM";
   resizeImage($image, $outputFileWidth, $outputFileHeight, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
 }
 if($createLDPI)
 {
+  $mod = 'ldpi';
   if($generateOutputDirectory){
-      $modFolderL = 'drawable-ldpi';
+      $modFolderL = "drawable-$mod";
       make_path("$outputDirectoryName/$modFolderL");
+  }
+  else
+  {
+    $outputFileName = "$filename-$mod$suffix";
   }	
   $outputFolder = "$outputDirectoryName/$modFolderL";
   resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
