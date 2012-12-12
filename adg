@@ -108,7 +108,7 @@ if($help)
   print "Usage adg [file] [referencesize size] [--outname name] [--outwidth size] [--outheight size] [--outdir path] [--genoutdir] [--aspectratio] [--scaleoutside] [--ldpi] [--mdpi] [--hdpi] [--xhdpi] [--help]\n";
   print "\n";
   print "A image will be scaled based on the size provided. This scaling will happen by generating a square using the dimensions provided and then fitting the image inside of it. By default the image will not be stretched and it will be scaled to fit inside the square. Some options can be used, such as --noaspectratio, to strech the image into the shape. Another important option is --scaleoutside, this option will scale the image to fill the square.\n";
-  print "\n"
+  print "\n";
   print "A folder can also be passed as an argument, in which case all the images on the first level will be processed as described previously.\n";
   print "\n";
   print "The options marked as [negatable] can accept a 'no' in front of it to negate it's value. For example --nogenoutdir can be used to negate the effect of --genoutdir. Please check which options are negatable and what is their default value.\n";
