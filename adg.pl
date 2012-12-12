@@ -170,9 +170,36 @@ my $outputFolder = '';
 if($createXHDPI)
 {
   if($generateDirectory){
+      $modFolderXH = 'drawable-xhdpi';
+      make_path("$outputDirectoryName/$modFolderXH");
+  }	
+  $outputFolder = "$outputDirectoryName/$modFolderXH";
+  resizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $useAlpha, $outputFolder, $outputFileName);
+}
+if($createHDPI)
+{
+  if($generateDirectory){
+      $modFolderH = 'drawable-hdpi';
+      make_path("$outputDirectoryName/$modFolderH");
+  }
+  $outputFolder = "$outputDirectoryName/$modFolderH";
+  resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $useAlpha, $outputFolder, $outputFileName);
+}
+if($createMDPI)
+{
+  if($generateDirectory){
+      $modFolderM = 'drawable-mhdpi';
+      make_path("$outputDirectoryName/$modFolderM");
+  }	
+  $outputFolder = "$outputDirectoryName/$modFolderM";
+  resizeImage($image, $outputFileWidth, $outputFileHeight, $useAlpha, $outputFolder, $outputFileName);
+}
+if($createLDPI)
+{
+  if($generateDirectory){
       $modFolderL = 'drawable-ldpi';
       make_path("$outputDirectoryName/$modFolderL");
   }	
   $outputFolder = "$outputDirectoryName/$modFolderL";
-  resizeImage($image, $outputFileWidth * 0.75, $outputFileHeight * 0.75, $useAlpha, $outputFolder, $outputFileName);
+  resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $useAlpha, $outputFolder, $outputFileName);
 }
