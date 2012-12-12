@@ -7,6 +7,8 @@ Dependencies:
 * Perl
 * ImageMagick
 
+I would also recommend to place this script in a directory included in your $PATH to make it much easier to call.
+
 Usage
 =====
 adg [file] [reference size] [--outname] [--outwidth] [--outheight] [--outdir] [--genoutdir] [--aspectratio] [--scaleoutside] [--ldpi] [--mdpi] [--hdpi] [--xhdpi] [--help]
