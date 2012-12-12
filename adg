@@ -236,7 +236,6 @@ if($inputFileName =~ m/\/$/){
   }
 }
 
-
 #If the ourput folder is empty, use cwd
 if($outputDirectoryName eq ''){
   $outputDirectoryName = cwd;
@@ -269,16 +268,18 @@ if (-f $inputFileName) {
 }
 
 foreach (@files) {
-  next if ($_ =~ m/^\./);
+  next if ($_ =~ m/^\./ || -d $_);
+
   
-  my $pre = '';
-  if($traversing)
-  {
-    $pre = "$dir";
-  }
+#  my $pre = '';
+#  if($traversing)
+#  {
+#    $pre = "$dir";
+#  }
 
 
-  $inputFileName = "$pre/$_";
+
+  $inputFileName = "$dir/$_";
   #Starting file processing
   print "Opening image $inputFileName\n";
   my $image = Image::Magick->new;
@@ -340,15 +341,16 @@ foreach (@files) {
   if($createXHDPI)
   {
     $mod = 'xhdpi';
-    if($generateOutputDirectory){
+    if($generateOutputDirectory)
+    {
         $modFolderXH = "drawable-$mod";
-        make_path("$outputDirectoryName/$pre/$modFolderXH");
+        make_path("$outputDirectoryName/$modFolderXH");
     }
     else
     {
       $outputFileName = "$filename-$mod$suffix";
     }  
-    $outputFolder = "$outputDirectoryName/$pre/$modFolderXH";
+    $outputFolder = "$outputDirectoryName/$modFolderXH";
     resizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
   }
   if($createHDPI)
@@ -356,13 +358,13 @@ foreach (@files) {
     $mod = 'hdpi';
     if($generateOutputDirectory){
         $modFolderH = "drawable-$mod";
-        make_path("$outputDirectoryName/$pre/$modFolderH");
+        make_path("$outputDirectoryName/$modFolderH");
     }
     else
     {
       $outputFileName = "$filename-$mod$suffix";
     }  
-    $outputFolder = "$outputDirectoryName/$pre/$modFolderH";
+    $outputFolder = "$outputDirectoryName/$modFolderH";
     resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
   }
   if($createMDPI)
@@ -370,13 +372,13 @@ foreach (@files) {
     $mod = 'mdpi';
     if($generateOutputDirectory){
         $modFolderM = "drawable-$mod";
-        make_path("$outputDirectoryName/$pre/$modFolderM");
+        make_path("$outputDirectoryName/$modFolderM");
     }
     else
     {
       $outputFileName = "$filename-$mod$suffix";
     }  
-    $outputFolder = "$outputDirectoryName/$pre/$modFolderM";
+    $outputFolder = "$outputDirectoryName/$modFolderM";
     resizeImage($image, $outputFileWidth, $outputFileHeight, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
   }
   if($createLDPI)
@@ -384,13 +386,13 @@ foreach (@files) {
   $mod = 'ldpi';
   if($generateOutputDirectory){
       $modFolderL = "drawable-$mod";
-      make_path("$outputDirectoryName/$pre/$modFolderL");
+      make_path("$outputDirectoryName/$modFolderL");
   }
   else
     {
       $outputFileName = "$filename-$mod$suffix";
     }
-    $outputFolder = "$outputDirectoryName/$pre/$modFolderL";
+    $outputFolder = "$outputDirectoryName/$modFolderL";
     resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
   }
 }
