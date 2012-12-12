@@ -87,6 +87,7 @@ my $modFolderXH = '.';
 my $inputFileName = '';
 my $error = '';
 my $imageSide = '';
+my $traversing = '';
 
 GetOptions (	'outname=s'	=> \$outputFileName,
 		'outwidth=i' 	=> \$outputFileWidth,
@@ -107,6 +108,8 @@ if($help)
   print "Usage adg [file] [referencesize size] [--outname name] [--outwidth size] [--outheight size] [--outdir path] [--genoutdir] [--aspectratio] [--scaleoutside] [--ldpi] [--mdpi] [--hdpi] [--xhdpi] [--help]\n";
   print "\n";
   print "A image will be scaled based on the size provided. This scaling will happen by generating a square using the dimensions provided and then fitting the image inside of it. By default the image will not be stretched and it will be scaled to fit inside the square. Some options can be used, such as --noaspectratio, to strech the image into the shape. Another important option is --scaleoutside, this option will scale the image to fill the square.\n";
+  print "\n"
+  print "A folder can also be passed as an argument, in which case all the images on the first level will be processed as described previously.\n";
   print "\n";
   print "The options marked as [negatable] can accept a 'no' in front of it to negate it's value. For example --nogenoutdir can be used to negate the effect of --genoutdir. Please check which options are negatable and what is their default value.\n";
   print "\n";
@@ -116,7 +119,7 @@ if($help)
   print "\n";
   print "reference size: The image will be scaled by comparing a square of dimensions sizeXsize. The image can be scaled by using either the longest or the shortest side. If this value is provided, then do not use --outwidth or --outheight. Reference --scaleoutside\n";
   print "\n";
-  print "--outname: The name of the output file. If --genoutdir is not set, then a modifier(ldpi, mdpi, hdpi or xhdpi) will be included between the file name and the extension.\n";
+  print "--outname: The name of the output file. If --genoutdir is not set, then a modifier(ldpi, mdpi, hdpi or xhdpi) will be included between the file name and the extension. If you are passing a folder as an argument, then this value will not take effect\n";
   print "\n";
   print "--outwidth: The specific width for the shape used to set the scale. \n";
   print "\n";
@@ -224,6 +227,16 @@ if($outputDirectoryName =~ m/\/$/){
   }
 }
 
+#We do the same for the input file or directory
+if($inputFileName =~ m/\/$/){
+  chop($inputFileName);
+  if($inputFileName =~ m/\/$/){
+    print "Input file or directory is not well formatted\n";
+    exit;
+  }
+}
+
+
 #If the ourput folder is empty, use cwd
 if($outputDirectoryName eq ''){
   $outputDirectoryName = cwd;
@@ -243,111 +256,143 @@ if(!($createLDPI || $createMDPI || $createHDPI || $createXHDPI))
   $createXHDPI = '1';
 }
 
-#Starting file processing
-print "Opening image $inputFileName\n";
-my $image = Image::Magick->new;
-$image->read($inputFileName);   
-
-#If the outputFileName is empty, use the current file name
-my $filename;
-my $directories;
-my $suffix;
-if($outputFileName eq '')
-{
-  ($filename, $directories, $suffix) = fileparse($inputFileName, qr/\.[^.]*/);
-  $outputFileName = $filename; 
+my @files;
+my $dir;
+if (-f $inputFileName) {
+  @files = ($inputFileName);
+}elsif (-d $inputFileName) {
+  $dir = $inputFileName;
+  $traversing = '1';  
+  opendir(DIR, $dir) or die $!;
+  @files = readdir DIR;
+  closedir(DIR);
 }
 
-#Set the gravity to Center
-$image->Set( Gravity => 'Center' );
+foreach (@files) {
+  next if ($_ =~ m/^\./);
+  
+  my $pre = '';
+  if($traversing)
+  {
+    $pre = "$dir";
+  }
 
-#Get the dimensions required to scale the image using the bigger side
-#as a reference instead of the smaller.
-if($scaleOutside)
-{
-  my($width, $height, $size, $format) = $image->Ping($inputFileName);
-  my $maxSize = '0';
-  my $ratio = '0';
-  if($width < $height)
-  {
-    $ratio = $height/$width;
-    $maxSize = $outputFileHeight * $ratio; 
-  }
-  else
-  {
-    $ratio = $width/$height;
-    $maxSize = $outputFileWidth * $ratio; 
-  }
-  $outputFileWidth = $maxSize;
-  $outputFileHeight = $maxSize;
-  print "Image will use size $maxSize as a reference.\n";
-}
 
-if(!$generateOutputDirectory)
-{
-  print "Modular directories will not be created\n";
-}
+  $inputFileName = "$pre/$_";
+  #Starting file processing
+  print "Opening image $inputFileName\n";
+  my $image = Image::Magick->new;
+  $image->read($inputFileName);   
 
-#We will check each size flag and the $generateDirectory flag
-#and we will take action as required. If generateDirectory is
-#not set then $modFolder will be equal to '.'. If it is set, 
-#then $modFolder will be the respective folder with the modifier
-#(ldpi, mdpi, hdpi, xhdpi).
-my $outputFolder = '';
-my $mod = '';
-if($createXHDPI)
-{
-  $mod = 'xhdpi';
-  if($generateOutputDirectory){
-      $modFolderXH = "drawable-$mod";
-      make_path("$outputDirectoryName/$modFolderXH");
-  }
-  else
+  if($traversing)
   {
-    $outputFileName = "$filename-$mod$suffix";
-  }	
-  $outputFolder = "$outputDirectoryName/$modFolderXH";
-  resizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
-}
-if($createHDPI)
-{
-  $mod = 'hdpi';
-  if($generateOutputDirectory){
-      $modFolderH = "drawable-$mod";
-      make_path("$outputDirectoryName/$modFolderH");
+    $outputFileName = '';
   }
-  else
+
+  #If the outputFileName is empty, use the current file name
+  my $filename;
+  my $directories;
+  my $suffix;
+  if($outputFileName eq '')
   {
-    $outputFileName = "$filename-$mod$suffix";
-  }	
-  $outputFolder = "$outputDirectoryName/$modFolderH";
-  resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
-}
-if($createMDPI)
-{
-  $mod = 'mdpi';
-  if($generateOutputDirectory){
-      $modFolderM = "drawable-$mod";
-      make_path("$outputDirectoryName/$modFolderM");
+    ($filename, $directories, $suffix) = fileparse($inputFileName, qr/\.[^.]*/);
+    $outputFileName = "$filename$suffix"; 
   }
-  else
+
+  #Set the gravity to Center
+  $image->Set( Gravity => 'Center' );
+  
+  #Get the dimensions required to scale the image using the bigger side
+  #as a reference instead of the smaller.
+  if($scaleOutside)
   {
-    $outputFileName = "$filename-$mod$suffix";
-  }	
-  $outputFolder = "$outputDirectoryName/$modFolderM";
-  resizeImage($image, $outputFileWidth, $outputFileHeight, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
-}
-if($createLDPI)
-{
+    my($width, $height, $size, $format) = $image->Ping($inputFileName);
+    my $maxSize = '0';
+    my $ratio = '0';
+    if($width < $height)
+    {
+      $ratio = $height/$width;
+      $maxSize = $outputFileHeight * $ratio; 
+    }
+    else
+    {
+      $ratio = $width/$height;
+      $maxSize = $outputFileWidth * $ratio; 
+    }
+    $outputFileWidth = $maxSize;
+    $outputFileHeight = $maxSize;
+    print "Image will use size $maxSize as a reference.\n";
+  }
+  
+  if(!$generateOutputDirectory)
+  {
+    print "Modular directories will not be created\n";
+  }
+  
+  #We will check each size flag and the $generateDirectory flag
+  #and we will take action as required. If generateDirectory is
+  #not set then $modFolder will be equal to '.'. If it is set, 
+  #then $modFolder will be the respective folder with the modifier
+  #(ldpi, mdpi, hdpi, xhdpi).
+  my $outputFolder = '';
+  my $mod = '';
+ 
+  print "\nresizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);\n\n";
+
+  if($createXHDPI)
+  {
+    $mod = 'xhdpi';
+    if($generateOutputDirectory){
+        $modFolderXH = "drawable-$mod";
+        make_path("$outputDirectoryName/$pre/$modFolderXH");
+    }
+    else
+    {
+      $outputFileName = "$filename-$mod$suffix";
+    }  
+    $outputFolder = "$outputDirectoryName/$pre/$modFolderXH";
+    resizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
+  }
+  if($createHDPI)
+  {
+    $mod = 'hdpi';
+    if($generateOutputDirectory){
+        $modFolderH = "drawable-$mod";
+        make_path("$outputDirectoryName/$pre/$modFolderH");
+    }
+    else
+    {
+      $outputFileName = "$filename-$mod$suffix";
+    }  
+    $outputFolder = "$outputDirectoryName/$pre/$modFolderH";
+    resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
+  }
+  if($createMDPI)
+  {
+    $mod = 'mdpi';
+    if($generateOutputDirectory){
+        $modFolderM = "drawable-$mod";
+        make_path("$outputDirectoryName/$pre/$modFolderM");
+    }
+    else
+    {
+      $outputFileName = "$filename-$mod$suffix";
+    }  
+    $outputFolder = "$outputDirectoryName/$pre/$modFolderM";
+    resizeImage($image, $outputFileWidth, $outputFileHeight, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
+  }
+  if($createLDPI)
+  {
   $mod = 'ldpi';
   if($generateOutputDirectory){
       $modFolderL = "drawable-$mod";
-      make_path("$outputDirectoryName/$modFolderL");
+      make_path("$outputDirectoryName/$pre/$modFolderL");
   }
   else
-  {
-    $outputFileName = "$filename-$mod$suffix";
-  }	
-  $outputFolder = "$outputDirectoryName/$modFolderL";
-  resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
+    {
+      $outputFileName = "$filename-$mod$suffix";
+    }
+    $outputFolder = "$outputDirectoryName/$pre/$modFolderL";
+    resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
+  }
 }
