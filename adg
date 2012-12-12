@@ -337,8 +337,6 @@ foreach (@files) {
   my $outputFolder = '';
   my $mod = '';
  
-  print "\nresizeImage($image, $outputFileWidth * 2.0, $outputFileHeight * 2.0, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);\n\n";
-
   if($createXHDPI)
   {
     $mod = 'xhdpi';
