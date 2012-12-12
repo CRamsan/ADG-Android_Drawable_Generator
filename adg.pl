@@ -24,7 +24,8 @@ sub resizeImage{
   my $imageAlpha = $_[3];  
   my $imageDirectory = $_[4];
   my $imageFilename = $_[5];
- 
+
+  #Set if using alpha
   if($imageAlpha)
   {
     $imageObject->Set(alpha=>'On');
@@ -33,9 +34,11 @@ sub resizeImage{
   {
     $imageObject->Set(alpha=>'Off');
   }
-
+  
+  #Make the required changes
   $image->Resize( geometry => "$imageWidth"."x"."$imageHeight" );
   print "Saving file to $imageDirectory/$imageFilename\n";
+  #Save the image
   $image->Write( "$imageDirectory/$imageFilename" );
 }
 
@@ -60,6 +63,8 @@ my $createMDPI = '0';
 my $createHDPI = '0';
 my $createXHDPI = '0';
 
+my $help = '0';
+
 my $modFolderL = '.';
 my $modFolderM = '.';
 my $modFolderH = '.';
@@ -78,7 +83,8 @@ $error = GetOptions ('outName:s'=> \$outputFileName,
 						 'ldpi'  	=> \$createLDPI,
 						 'mdpi'  	=> \$createMDPI,
 						 'hdpi' 	=> \$createHDPI,
-						 'xhdpi'  	=> \$createXHDPI);
+						 'xhdpi'  	=> \$createXHDPI,
+						 'help' 	=> \$help);
 
 if ($error)
 {
@@ -87,6 +93,12 @@ if ($error)
   exit;
 }
 
+if($help)
+{
+  print "";
+}
+
+#Check the validity of the provided dimensions
 if($outputFileHeight == 0 && $outputFileWidth == 0)
 {
   print "No dimensions provided\n";
@@ -135,6 +147,7 @@ if($outputDirectoryName eq ''){
   $outputDirectoryName = cwd;
 }
 
+#Get the input file from the arguments
 $inputFileName = ARG[0]
 
 #Main body
@@ -157,15 +170,24 @@ else
   print "Modular directories will not be created\n";
 }
 
+#Starting file processing
 print "Opening image $filename\n";
 my $image = Image::Magick->new;
 $image->read($inputFileName);   
+#If the outputFileName is empty, use the current file name
 if($outputFileName ne '')
 {
   $outputFileName = fileparse($inputFileName)[1]; 
 }
+
+#Set the gravity to Center
 $image->Set( Gravity => 'Center' );
 
+#We will check each size flag and the $generateDirectory flag
+#and we will take action as required. If generateDirectory is
+#not set then $modFolder will be equal to '.'. If it is set, 
+#then $modFolder will be the respective folder with the modifier
+#(ldpi, mdpi, hdpi, xhdpi).
 my $outputFolder = '';
 if($createXHDPI)
 {
