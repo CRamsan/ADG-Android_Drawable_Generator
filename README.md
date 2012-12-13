@@ -11,7 +11,9 @@ I would also recommend to place this script in a directory included in your $PAT
 
 Usage
 =====
-adg [file] [reference size] [--outname] [--outwidth] [--outheight] [--outdir] [--genoutdir] [--aspectratio] [--scaleoutside] [--ldpi] [--mdpi] [--hdpi] [--xhdpi] [--help]
+    adg [file] [reference size] [--outname] [--outwidth]
+    [--outheight] [--outdir] [--genoutdir] [--aspectratio] 
+    [--scaleoutside] [--ldpi] [--mdpi] [--hdpi] [--xhdpi] [--help]
 
 How scaling works
 =================
@@ -58,6 +60,35 @@ By default, all the modified images will be created(ldpi, mdpi, hdpi, xhdpi), bu
 
 Examples
 =========
+ 
+ * Scale image.png to fit a square 30x30 as a basesize.
 
- * adg image.png 30; Scale image.png to fit a square 30x30
- * adg image.png 30; Scale image.png to fit a square 30x30
+    adg image.png 30;
+
+ * Scale image.png to fit a square 30x30 and place the output into ~/Project/res.
+
+    adg image.png 30 --outdir ~/Project/res;
+
+ * Produce same files as above but do not create the folders to hold each file.
+
+    adg image.png 30 --nogenoutdir;
+
+ * Iterate through all the images on the first level of the resources/ directory and apply the scaling to each one. The output should be the current directory.
+
+    adg resources/ 100;
+
+ * Generate output only for the specified screen densities.
+
+    adg image.png 30 --mdpi --hdpi;
+
+ * Scale the image to fill(rather than fit) a square of 200x200. This option is very useful when working with backgrounds.
+
+    adg image.png 200 --scaleoutside;
+
+ * Scale the image to best fit a square of 200x100. The output file will be called source.png.
+
+    adg image.png --outname resource.png --outwidth 200 --outheight 100;
+
+ * Same as above but image will be streched into a 200x100 area.
+
+    adg image.png --outname resource.png --outwidth 200 --outheight 100 --noaspectratio;
