@@ -16,7 +16,7 @@ adg [file] [reference size] [--outname] [--outwidth] [--outheight] [--outdir] [-
 How scaling works
 =================
 
-A image will be scaled based on the size provided. This scaling will happen by generating a square using the dimensions provided and then fitting the image inside of it. By default the image will not be stretched and it will be scaled to fit inside the square. Some options can be used, such as --noaspectratio, to strech the image into the shape. Another important option is --scaleoutside, this option will scale the image to fill the square.
+A image will be scaled based on the size provided. The size provided will be used for the mdpi image, all the other images will have relative sizes as specified on http://developer.android.com/guide/practices/screens_support.html#DesigningResources. The scaling will happen by generating a square using the dimensions provided and then fitting the image inside of it. By default the image will not be stretched and it will be scaled to fit inside the square. Some options can be used, such as --noaspectratio, to strech the image into the shape. Another important option is --scaleoutside, this option will scale the image to fill the square.
 
 Negatable flags
 ===============
@@ -56,3 +56,8 @@ By default, all the modified images will be created(ldpi, mdpi, hdpi, xhdpi), bu
 
  * --help: Display this message
 
+Examples
+=========
+
+ * adg image.png 30; Scale image.png to fit a square 30x30
+ * adg image.png 30; Scale image.png to fit a square 30x30
