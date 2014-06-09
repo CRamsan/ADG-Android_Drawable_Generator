@@ -254,22 +254,27 @@ if(!($createLDPI || $createMDPI || $createHDPI || $createXHDPI))
   $createHDPI = '1';
   $createXHDPI = '1';
 }
-
 my @files;
 my $dir;
+my $is_directory = '0';
+
+print "Target is: $inputFileName";
+
 if (-f $inputFileName) {
+  print ", it is a file\n";
   @files = ($inputFileName);
 }elsif (-d $inputFileName) {
+  print ", it is a folder\n";
   $dir = $inputFileName;
-  $traversing = '1';  
+  $traversing = '1'; 
+  $is_directory = '1'; 
   opendir(DIR, $dir) or die $!;
   @files = readdir DIR;
   closedir(DIR);
 }
 
 foreach (@files) {
-  next if ($_ =~ m/^\./ || -d $_);
-
+  next if (-d $_);
   
 #  my $pre = '';
 #  if($traversing)
@@ -278,8 +283,12 @@ foreach (@files) {
 #  }
 
 
+  if($is_directory == '1'){
+    $inputFileName = "$dir/$_";
+  }else{
+    $inputFileName = "$_";
+  }
 
-  $inputFileName = "$dir/$_";
   #Starting file processing
   print "Opening image $inputFileName\n";
   my $image = Image::Magick->new;
