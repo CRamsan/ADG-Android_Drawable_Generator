@@ -402,6 +402,6 @@ foreach (@files) {
       $outputFileName = "$filename-$mod$suffix";
     }
     $outputFolder = "$outputDirectoryName/$modFolderL";
-    resizeImage($image, $outputFileWidth * 1.5, $outputFileHeight * 1.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
+    resizeImage($image, $outputFileWidth * 0.5, $outputFileHeight * 0.5, $outputFolder, $outputFileName, $useAlpha, $keepAspectRatio);
   }
 }
